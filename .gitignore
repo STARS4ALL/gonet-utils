@@ -163,5 +163,6 @@ cython_debug/
 *.db
 *.txt
 *.csv
-
 *.jpg
+src/gonetutils/_version.py
+
