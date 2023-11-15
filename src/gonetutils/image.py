@@ -142,19 +142,21 @@ class Image:
     def dimensions(self):
         return self._shape
 
-    def statistics(self, channel, roi):
-        '''Debayer and trim'''
+    def statistics(self, roi):
+        '''Debayer and trim all channels for efficiency'''
         cfa_pattern = self.cfa_pattern()
         with rawpy.imread(self._path) as img:
             # very imporatnt to be under the image context manager
             # for all pixel handling incluidng statistics
-            x = self.CFA_OFFSETS[cfa_pattern][channel]['x']
-            y = self.CFA_OFFSETS[cfa_pattern][channel]['y']
-            raw_pixels = img.raw_image[y::2, x::2] # This is the real debayering thing
-            y1 = roi.y1 ; y2 = roi.y2
-            x1 = roi.x1 ; x2 = roi.x2
-            raw_pixels = raw_pixels[y1:y2, x1:x2]  # Extract ROI
-            average, stdev = round(raw_pixels.mean(),1), round(raw_pixels.std(),3)
+            average, stdev = dict(), dict()
+            for channel in ('R', 'G1', 'G2', 'B'):
+                x = self.CFA_OFFSETS[cfa_pattern][channel]['x']
+                y = self.CFA_OFFSETS[cfa_pattern][channel]['y']
+                raw_pixels = img.raw_image[y::2, x::2] # This is the real debayering thing
+                y1 = roi.y1 ; y2 = roi.y2
+                x1 = roi.x1 ; x2 = roi.x2
+                raw_pixels = raw_pixels[y1:y2, x1:x2]  # Extract ROI
+                average[channel], stdev[channel] = round(raw_pixels.mean(),1), round(raw_pixels.std(),3)
         return average, stdev
 
 
@@ -171,10 +173,7 @@ def stats(options):
     saturation = image.saturation_levels()
     log.info("Bias: per channel = %s, global = %d, Saturation levels = %s", levels, global_bias, saturation)
     bayer = image.cfa_pattern()
-    aver_r, std_r = image.statistics('R', roi)
-    aver_g1, std_r1 = image.statistics('G1', roi)
-    aver_g2, std_g2 = image.statistics('G2', roi)
-    aver_b, std_b = image.statistics('B', roi)
+    aver, std = image.statistics(roi)
     log.info("File %s: %s ROI %s (%dx%d)", os.path.basename(options.file), image.dimensions(), roi, options.width, options.height)
     log.info("[R]=%.1f \u03C3=%.2f, [G1]=%.1f \u03C3=%.2f, [G2]=%.1f \u03C3=%.2f, [B]=%.1f \u03C3 = %.2f", 
-        aver_r, std_r, aver_g1, std_r1, aver_g2, std_g2, aver_b, std_b)
+        aver['R'], std['R'], aver['G1'], std['G1'], aver['G2'], std['G2'], aver['B'], std['B'])
