@@ -90,7 +90,8 @@ def nearest_power_of_two(bias):
  
 class CSV:
 
-    KEYS = ('wavelength', 'aver_R', 'aver_G1', 'aver_G2', 'aver_B', 'stdev_R', 'stdev_G1', 'stdev_G2', 'stdev_B')
+    KEYS = ('wavelength [nm]', 'exposure [ms]', 'aver[R]', 'aver[G1]', 'aver[G2]', 'aver[B]', 
+        'stdev[R]', 'stdev[G1]', 'stdev[G2]', 'stdev[B]')
 
     def __init__(self, path):
         self._path = path
@@ -102,12 +103,11 @@ class CSV:
             writer = csv.DictWriter(csv_file, delimiter=';', fieldnames=self.KEYS)
             writer.writeheader()
 
-    def append(self, wavelength, aver_dict, stdev_dict):
-        row = {'wavelength': wavelength, 
-            'aver_R': aver_dict['R'], 'aver_G1': aver_dict['G1'], 'aver_G2': aver_dict['G1'], 'aver_B':aver_dict['B'],
-            'stdev_R': stdev_dict['R'], 'stdev_G1': stdev_dict['G1'], 'stdev_G2': stdev_dict['G1'], 'stdev_B':stdev_dict['B'],
+    def append(self, wavelength, exposure, aver_dict, stdev_dict):
+        row = {'wavelength [nm]': wavelength, 'exposure [ms]': exposure,
+            'aver[R]': aver_dict['R'], 'aver[G1]': aver_dict['G1'], 'aver[G2]': aver_dict['G1'], 'aver[B]': aver_dict['B'],
+            'stdev[R]': stdev_dict['R'], 'stdev[G1]': stdev_dict['G1'], 'stdev[G2]': stdev_dict['G2'], 'stdev[B]': stdev_dict['B'],
             }
-        log.info(row)
         with open(self._path, 'a', newline='') as csv_file:
             writer = csv.DictWriter(csv_file, delimiter=';', fieldnames=self.KEYS)
             writer.writerow(row)
@@ -213,4 +213,4 @@ def stats(options):
     log.info("File %s: %s ROI %s (%dx%d)", os.path.basename(options.input_file), image.dimensions(), roi, options.width, options.height)
     log.info("[R]=%.1f \u03C3=%.2f, [G1]=%.1f \u03C3=%.2f, [G2]=%.1f \u03C3=%.2f, [B]=%.1f \u03C3 = %.2f", 
         aver['R'], std['R'], aver['G1'], std['G1'], aver['G2'], std['G2'], aver['B'], std['B'])
-    csv_file.append(options.wavelength, aver, std)
+    csv_file.append(options.wavelength, options.exposure, aver, std)
