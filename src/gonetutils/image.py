@@ -167,12 +167,11 @@ class Image:
 def stats(options):
     roi = Rect.from_image(options.file, width=options.width, height=options.height)
     image = Image(options.file)
-    camera = image.camera()
-    log.info("Camera model: %s",camera)
-    levels, global_bias = image.bias() # Not really used
+    #camera = image.camera()
+    #log.info("Camera model: %s",camera)
+    levels, global_bias = image.bias()
     saturation = image.saturation_levels()
     log.info("Bias: per channel = %s, global = %d, Saturation levels = %s", levels, global_bias, saturation)
-    bayer = image.cfa_pattern()
     aver, std = image.statistics(roi)
     log.info("File %s: %s ROI %s (%dx%d)", os.path.basename(options.file), image.dimensions(), roi, options.width, options.height)
     log.info("[R]=%.1f \u03C3=%.2f, [G1]=%.1f \u03C3=%.2f, [G2]=%.1f \u03C3=%.2f, [B]=%.1f \u03C3 = %.2f", 
