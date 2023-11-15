@@ -144,23 +144,21 @@ class Image:
         return raw_pixels[y::2, x::2] # This is the real debayering thing
 
 
-    def debayer_and_trim(self, channel, roi):
+    def statistics(self, channel, roi):
         '''Debayer and trim'''
         cfa_pattern = self.cfa_pattern()
         with rawpy.imread(self._path) as img:
-            raw_pixels = img.raw_image
-        x = self.CFA_OFFSETS[cfa_pattern][channel]['x']
-        y = self.CFA_OFFSETS[cfa_pattern][channel]['y']
-        raw_pixels = raw_pixels[y::2, x::2] # This is the real debayering thing
-        y1 = roi.y1 ; y2 = roi.y2
-        x1 = roi.x1 ; x2 = roi.x2
-        return raw_pixels[y1:y2, x1:x2]
-
-
-    def statistics(self, channel, roi):
-        pixels = self.debayer_and_trim(channel ,roi)
-        average, stdev = round(pixels.mean(),1), round(pixels.std(),3)
+            # very imporatnt to be under the image context manager
+            # for all pixel handling incluidng statistics
+            x = self.CFA_OFFSETS[cfa_pattern][channel]['x']
+            y = self.CFA_OFFSETS[cfa_pattern][channel]['y']
+            raw_pixels = img.raw_image[y::2, x::2] # This is the real debayering thing
+            y1 = roi.y1 ; y2 = roi.y2
+            x1 = roi.x1 ; x2 = roi.x2
+            raw_pixels = raw_pixels[y1:y2, x1:x2]  # Extract ROI
+            average, stdev = round(raw_pixels.mean(),1), round(raw_pixels.std(),3)
         return average, stdev
+
 
 # =================
 # MAIN ENTRY POINTS
