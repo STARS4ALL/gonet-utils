@@ -28,7 +28,7 @@ from ._version import __version__
 # Module global variables
 # -----------------------
 
-log = logging.getLogger('root')
+log = logging.getLogger()
 package = __name__.split(".")[0]
 
 # ------------------------
@@ -131,8 +131,8 @@ def create_parser():
     subparser = parser_img.add_subparsers(dest='subcommand')
     img = subparser.add_parser('stats',  help="Calculate statistics around image center")
     img.add_argument('-f', '--file', type=valid_file, required=True, help='Analyze single file')
-    img.add_argument('-x', '--width', type=int, default=500, help='Center box width')
-    img.add_argument('-y', '--height', type=int, default=300, help='Center box height')
+    img.add_argument('-x', '--width', type=int, default=100, help='Center box width')
+    img.add_argument('-y', '--height', type=int, default=100, help='Center box height')
     
     return parser
 
