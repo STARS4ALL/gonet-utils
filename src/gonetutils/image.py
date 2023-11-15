@@ -11,6 +11,7 @@
 # -------------------
 
 import os
+import csv
 import math
 import logging
 
@@ -34,8 +35,9 @@ from .roi import Rect
 
 log = logging.getLogger(__name__)
 
-
-
+# ---------
+# Exceptions
+# ---------
 
 class UnsupportedCFAError(ValueError):
     '''Unsupported Color Filter Array type'''
@@ -69,6 +71,11 @@ class TooDifferentValuesBiasError(BiasError):
     '''Differences in counts between channels exceed threshold'''
     pass
 
+
+# ------------------
+# Auxiliar functions
+# ------------------
+
 def nearest_power_of_two(bias):
     if bias == 0:
         return 0, False
@@ -81,6 +88,35 @@ def nearest_power_of_two(bias):
         warning = True
     return nearest, warning
  
+class CSV:
+
+    KEYS = ('wavelength', 'aver_R', 'aver_G1', 'aver_G2', 'aver_B', 'stdev_R', 'stdev_G1', 'stdev_G2', 'stdev_B')
+
+    def __init__(self, path):
+        self._path = path
+        if not os.path.exists(path):
+            self._header()
+
+    def _header(self):
+        with open(self._path, 'w',newline='') as csv_file:
+            writer = csv.DictWriter(csv_file, delimiter=';', fieldnames=self.KEYS)
+            writer.writeheader()
+
+    def append(self, wavelength, aver_dict, stdev_dict):
+        row = {'wavelength': wavelength, 
+            'aver_R': aver_dict['R'], 'aver_G1': aver_dict['G1'], 'aver_G2': aver_dict['G1'], 'aver_B':aver_dict['B'],
+            'stdev_R': stdev_dict['R'], 'stdev_G1': stdev_dict['G1'], 'stdev_G2': stdev_dict['G1'], 'stdev_B':stdev_dict['B'],
+            }
+        log.info(row)
+        with open(self._path, 'a', newline='') as csv_file:
+            writer = csv.DictWriter(csv_file, delimiter=';', fieldnames=self.KEYS)
+            writer.writerow(row)
+
+
+
+# ----------------
+# Auxiliar classes
+# ----------------
 
 class Image:
 
@@ -165,14 +201,16 @@ class Image:
 # =================
 
 def stats(options):
-    roi = Rect.from_image(options.file, width=options.width, height=options.height)
-    image = Image(options.file)
+    roi = Rect.from_image(options.input_file, width=options.width, height=options.height)
+    image = Image(options.input_file)
+    csv_file = CSV(options.output_file)
     #camera = image.camera()
     #log.info("Camera model: %s",camera)
     levels, global_bias = image.bias()
     saturation = image.saturation_levels()
     log.info("Bias: per channel = %s, global = %d, Saturation levels = %s", levels, global_bias, saturation)
     aver, std = image.statistics(roi)
-    log.info("File %s: %s ROI %s (%dx%d)", os.path.basename(options.file), image.dimensions(), roi, options.width, options.height)
+    log.info("File %s: %s ROI %s (%dx%d)", os.path.basename(options.input_file), image.dimensions(), roi, options.width, options.height)
     log.info("[R]=%.1f \u03C3=%.2f, [G1]=%.1f \u03C3=%.2f, [G2]=%.1f \u03C3=%.2f, [B]=%.1f \u03C3 = %.2f", 
         aver['R'], std['R'], aver['G1'], std['G1'], aver['G2'], std['G2'], aver['B'], std['B'])
+    csv_file.append(options.wavelength, aver, std)
