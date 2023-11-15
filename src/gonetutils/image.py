@@ -96,6 +96,16 @@ class Image:
 
     def __init__(self, path):
         self._path = path
+        self._metadata()
+
+    def _metadata(self):
+        '''Gather as much rawpy img access as possible for efficiency'''
+        with rawpy.imread(self._path) as img:
+            self._color_desc = img.color_desc.decode('utf-8')
+            self._shape = img.raw_image.shape
+            self._cfa = ''.join([ self.BAYER_LETTER[img.raw_pattern[row,column]] for row in (1,0) for column in (1,0)])
+            self._biases = img.black_level_per_channel
+            self._white_levels = img.camera_white_level_per_channel
 
 
     def camera(self):
@@ -109,40 +119,28 @@ class Image:
 
     def cfa_pattern(self):
         '''Returns the Bayer pattern as RGGB, BGGR, GRBG, GBRG strings '''
-        with rawpy.imread(self._path) as img:
-            color_desc = img.color_desc.decode('utf-8')
-            if color_desc != 'RGBG':
-                raise UnsupporteCFAError(color_desc)
-            cfa = ''.join([ self.BAYER_LETTER[img.raw_pattern[row,column]] for row in (1,0) for column in (1,0)])
-        return cfa
+        if self._color_desc != 'RGBG':
+            raise UnsupporteCFAError(self._color_desc)
+        return self._cfa
 
 
     def bias(self):
-        with rawpy.imread(self._path) as img:
-            levels = img.black_level_per_channel
-        global_bias = min(levels)
-        if max(levels) - global_bias > 4:
-            raise TooDifferentValuesBiasError(global_bias, levels, 4)
-        tuples   = [nearest_power_of_two(bias) for bias in levels]
-        #log.debug("biases tuples = {tuples}",tuples=tuples)
+        global_bias = min(self._biases)
+        if max(self._biases) - global_bias > 4:
+            raise TooDifferentValuesBiasError(global_bias, self._biases, 4)
+        tuples   = [nearest_power_of_two(bias) for bias in self._biases]
         biases   = [item[0] for item in tuples]
         warnings = [item[1] for item in tuples]
         if any(warnings):
-            raise NotPowerOfTwoErrorBiasError(global_bias, levels)
+            raise NotPowerOfTwoErrorBiasError(global_bias, self._biases)
         global_bias = biases[0]
-        log.info("Analyzing bias levels(%s), global bias = %d", levels, global_bias)
-        return global_bias
+        return self._biases, global_bias
 
+    def saturation_levels(self):
+        return self._white_levels
 
-    def debayer(self, channel):
-        '''channel is R, G1, G2, B'''
-        cfa_pattern = self.cfa_pattern()
-        with rawpy.imread(self._path) as img:
-            raw_pixels = img.raw_image
-        x = self.CFA_OFFSETS[cfa_pattern][channel]['x']
-        y = self.CFA_OFFSETS[cfa_pattern][channel]['y']
-        return raw_pixels[y::2, x::2] # This is the real debayering thing
-
+    def dimensions(self):
+        return self._shape
 
     def statistics(self, channel, roi):
         '''Debayer and trim'''
@@ -167,13 +165,16 @@ class Image:
 def stats(options):
     roi = Rect.from_image(options.file, width=options.width, height=options.height)
     image = Image(options.file)
-    bias = image.bias() # Not used
     camera = image.camera()
+    log.info("Camera model: %s",camera)
+    levels, global_bias = image.bias() # Not really used
+    saturation = image.saturation_levels()
+    log.info("Bias: per channel = %s, global = %d, Saturation levels = %s", levels, global_bias, saturation)
     bayer = image.cfa_pattern()
     aver_r, std_r = image.statistics('R', roi)
     aver_g1, std_r1 = image.statistics('G1', roi)
     aver_g2, std_g2 = image.statistics('G2', roi)
     aver_b, std_b = image.statistics('B', roi)
-    log.info("%s: %s %s (%dx%d)", camera,os.path.basename(options.file), roi, options.width, options.height)
+    log.info("File %s: %s ROI %s (%dx%d)", os.path.basename(options.file), image.dimensions(), roi, options.width, options.height)
     log.info("[R]=%.1f \u03C3=%.2f, [G1]=%.1f \u03C3=%.2f, [G2]=%.1f \u03C3=%.2f, [B]=%.1f \u03C3 = %.2f", 
         aver_r, std_r, aver_g1, std_r1, aver_g2, std_g2, aver_b, std_b)
