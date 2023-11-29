@@ -137,7 +137,7 @@ def create_parser():
     subparser = parser_img.add_subparsers(dest='subcommand')
     img = subparser.add_parser('stats',  help="Calculate statistics around image center")
     img.add_argument('-w', '--wavelength', type=int, required=True, help='Wavelength [nm]')
-    img.add_argument('-c', '--current', type=float, required=True, help='Current [pA]')
+    img.add_argument('-f', '--filter', choices=('B','O','R','C'), required=True, help='Filter (BG38|OG570|RG830|Clear)')
     img.add_argument('-e', '--exposure', type=int, required=True, help='Exposure time [ms]')
     img.add_argument('-i', '--input-file', type=valid_file, required=True, help='Input JPEG file')
     img.add_argument('-o', '--output-file', type=str, required=True, help='Output CSV file')

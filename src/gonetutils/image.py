@@ -33,6 +33,7 @@ from .roi import Rect
 # Constants
 # ---------
 
+FILTER = {'R': 'OG570', 'B': 'BG38', 'I': 'RG830', 'C': 'Clear'}
 
 log = logging.getLogger(__name__)
 
@@ -93,7 +94,7 @@ def nearest_power_of_two(bias):
  
 class CSV:
 
-    KEYS = ('timestamp', 'wavelength [nm]', 'current [pA]', 'exposure [ms]', 'aver[R]', 'aver[G1]', 'aver[G2]', 'aver[B]', 
+    KEYS = ('timestamp', 'wavelength [nm]', 'filter', 'exposure [ms]', 'aver[R]', 'aver[G1]', 'aver[G2]', 'aver[B]', 
         'stdev[R]', 'stdev[G1]', 'stdev[G2]', 'stdev[B]')
 
     def __init__(self, path):
@@ -106,8 +107,8 @@ class CSV:
             writer = csv.DictWriter(csv_file, delimiter=';', fieldnames=self.KEYS)
             writer.writeheader()
 
-    def append(self, tstamp, wavelength, current, exposure, aver_dict, stdev_dict):
-        row = {'timestamp': tstamp, 'wavelength [nm]': wavelength, 'current [pA]': current, 'exposure [ms]': exposure,
+    def append(self, tstamp, wavelength, filter_key, exposure, aver_dict, stdev_dict):
+        row = {'timestamp': tstamp, 'wavelength [nm]': wavelength, 'filter': FILTER[filter_key], 'exposure [ms]': exposure,
             'aver[R]': aver_dict['R'], 'aver[G1]': aver_dict['G1'], 'aver[G2]': aver_dict['G1'], 'aver[B]': aver_dict['B'],
             'stdev[R]': stdev_dict['R'], 'stdev[G1]': stdev_dict['G1'], 'stdev[G2]': stdev_dict['G2'], 'stdev[B]': stdev_dict['B'],
             }
@@ -215,6 +216,6 @@ def stats(options):
     log.info("Bias: per channel = %s, global = %d, Saturation levels = %s", levels, global_bias, saturation)
     aver, std = image.statistics(roi)
     log.info("File %s: %s ROI %s (%dx%d)", os.path.basename(options.input_file), image.dimensions(), roi, options.width, options.height)
-    log.info("[R]=%.1f \u03C3=%.2f, [G1]=%.1f \u03C3=%.2f, [G2]=%.1f \u03C3=%.2f, [B]=%.1f \u03C3 = %.2f", 
-        aver['R'], std['R'], aver['G1'], std['G1'], aver['G2'], std['G2'], aver['B'], std['B'])
-    csv_file.append(timestamp, options.wavelength, options.current, options.exposure, aver, std)
+    log.info("[%s] [R]=%.1f \u03C3=%.2f, [G1]=%.1f \u03C3=%.2f, [G2]=%.1f \u03C3=%.2f, [B]=%.1f \u03C3 = %.2f", 
+        FILTER[options.filter], aver['R'], std['R'], aver['G1'], std['G1'], aver['G2'], std['G2'], aver['B'], std['B'])
+    csv_file.append(timestamp, options.wavelength, options.filter, options.exposure, aver, std)
