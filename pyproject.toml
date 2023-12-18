@@ -46,7 +46,11 @@ Repository = "https://github.com/astrorafael/gonet-utils.git"
 gonetutils = "gonetutils.main:main"
 
 [tool.setuptools]
-script-files = ["scripts/photo.sh",]
+script-files = [
+    "scripts/photo.sh",
+    "scripts/darks.sh",
+    "scripts/flats.sh"
+]
 
 # pyproject.toml
 [tool.setuptools_scm]
