@@ -57,8 +57,8 @@ def exposure(args):
     T = list(filter(greater_or_equal_t0, exposure_time_bag))
     log.info("After filtering, only %d different exposures", len(T))
     if args.time:
-        for t in sorted(T):
-            print(t)
+        for t in sorted( int(round(t*1000000,0)) for t in T):
+            print(f"{t:08d}")
     else:
         for i in range(1,len(T)+1):
             print(f"{i:03d}")
