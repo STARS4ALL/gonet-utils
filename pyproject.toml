@@ -43,7 +43,9 @@ Homepage = "https://github.com/astrorafael/gonet-utils"
 Repository = "https://github.com/astrorafael/gonet-utils.git"
 
 [project.scripts]
-gonetutils = "gonetutils.main:main"
+gonet-logger = "gonetutils.logger:main"
+gonet-stats = "gonetutils.stats:main"
+gonet-exposure = "gonetutils.exposure:main"
 
 [tool.setuptools]
 script-files = [
