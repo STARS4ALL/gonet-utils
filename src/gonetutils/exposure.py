@@ -12,6 +12,7 @@
 
 import math
 import logging
+import functools
 
 # ---------------------
 # Thrid-party libraries
@@ -37,22 +38,26 @@ log = logging.getLogger(__name__)
 # =================
 # MAIN ENTRY POINTS
 # =================
+def greater_or_equal(t0, t):
+    return t >= t0
+
 
 def exposure(args):
-    exposure_bag = set()
-    stops = int(round(math.log2(args.dn_max),0))
-    t0 = args.t_min,
+    t0 = args.t_min
     tf = args.t_max
+    pps = args.pps
+    stops = int(round(math.log2(args.dn_max),0))
+    exposure_time_bag = set()
     log.info("STOPS = %d",stops)
-    for level in range(0,stops+1):
-        tseq = np.linspace(t0, tf/(2**level), num=stops).reshape(-1)
-        log.info("tseq shape is %s", tseq.shape)
-        for t in tseq:
-            exposure_bag.add(t)
-    log.info("Exposure bag contains %d different exposures", len(exposure_bag))
-    T = sorted(list(exposure_bag))
+    for level in range(0, stops+1):
+        tseq = np.linspace(tf/tf/(2**(level+1)), tf/(2**level), num=pps).reshape(-1)
+        exposure_time_bag.update(tseq.tolist())
+    greater_or_equal_t0 = functools.partial(greater_or_equal, t0)
+    log.info("Exposure time bag contains %d different exposures", len(exposure_time_bag))
+    T = list(filter(greater_or_equal_t0, exposure_time_bag))
+    log.info("After filtering, only %d different exposures", len(T))
     if args.time:
-        for t in T:
+        for t in sorted(T):
             print(t)
     else:
         for i in range(1,len(T)+1):
@@ -71,6 +76,7 @@ def add_args(parser):
     parser.add_argument('-t0', '--t_min', type=vfloat, default=0.001, help='Minimun exposure time in seconds')
     parser.add_argument('-tf', '--t_max', type=vfloat, required=True, help='Maximun exposure time in seconds')
     parser.add_argument('-n', '--dn_max', type=int,    required=True, help='Saturation DN value (i.e. 4095)')
+    parser.add_argument('-p', '--pps', type=int, default=5, help='Points per segment')
   
 # MAIN ENTRY POINT
 # ================
