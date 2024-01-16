@@ -41,9 +41,6 @@ log = logging.getLogger(__name__)
 def stats(args):
     image = RawImage(args.input_file)
     roi = image.roi(args.x0, args.y0, args.width, args.height)
-    levels = image.black_levels()
-    saturation = image.saturation_levels()
-    log.info("Black levels per channel: %s, Saturation levels: %s", levels, saturation)
     aver, std = image.statistics(roi)
     log.info("ROI %s (%dx%d)", roi, roi.width(), roi.height())
     log.info("[R]=%.1f \u03C3=%.2f, [G1]=%.1f \u03C3=%.2f, [G2]=%.1f \u03C3=%.2f, [B]=%.1f \u03C3 = %.2f", 

@@ -2,7 +2,7 @@
 
 read -p "Enter Analog Gain [1..16], , hit CTRL+C to stop: "  analoggain
 
-EXPTIME=1000 # microseconds
+EXPTIME=100 # microseconds
 DATE=$(date +%Y%m%dT%H%M%S)
 
 # take a pair of darks

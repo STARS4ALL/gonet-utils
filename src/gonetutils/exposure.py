@@ -56,6 +56,7 @@ def log_adu_plan(t0, t1, max_adu, ppl):
     log.info("Exposure time bag contains %d different exposures", len(T))
     T = list(filter(greater_or_equal_t0, T))
     log.info("After t0 filtering, only %d different exposures", len(T))
+    log.info(T)
     return T
 
 def linear_plan(t0, t1, n):

@@ -1,9 +1,10 @@
 #!/bin/bash
 
-read -p "Max Exposure time [ms], , hit CTRL+C to stop: "  msecs
+read -p "Max Exposure time [ms], , hit CTRL+C to stop: "  tmax
+read -p "Min Exposure time [ms], , hit CTRL+C to stop: "  tmin
 read -p "Analog Gain [1..16], , hit CTRL+C to stop: "  analoggain
 
-exposure_plan=$(gonet-exposure --console stops -t0 1/1000 -tf ${msecs}/1000 -m 4095 -ppl 5)
+exposure_plan=$(gonet-exposure --console stops -t0 ${tmin}/1000 -t1 ${msecs}/1000 -m 4095 -ppl 5)
 
 for label in ${exposure_plan}
 do
