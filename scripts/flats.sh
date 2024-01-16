@@ -1,17 +1,19 @@
 #!/bin/bash
 
-read -p "Max Exposure time [ms], , hit CTRL+C to stop:: "  msecs
-read -p "Analog Gain [1..16], , hit CTRL+C to stop:: "  analoggain
+read -p "Max Exposure time [ms], , hit CTRL+C to stop: "  msecs
+read -p "Analog Gain [1..16], , hit CTRL+C to stop: "  analoggain
 
-exposure_list=$(gonet-exposure -t0 1/1000 -tf ${msecs}/1000 -n 4095 --time)
+exposure_plan=$(gonet-exposure stops -t0 1/1000 -tf ${msecs}/1000 -m 4095 -ppl 5)
 
-for t in ${exposure_list}
+for label in ${exposure_plan}
 do
-   IMAGE=flat_a_${t}_g${analoggain}.jpg
-   echo "raspistill --raw  --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analoggain} --digitalgain 1 --output ${IMAGE}"
-   raspistill --raw  --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analoggain} --digitalgain 1 --output ${IMAGE} || exit 255
+	i=${label:0:3}
+	t=${label:4:7}
+	IMAGE=flat_g${analoggain}_${i}_${t}_a.jpg
+	echo "raspistill --raw  --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analoggain} --digitalgain 1 --output ${IMAGE}"
+	raspistill --raw  --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analoggain} --digitalgain 1 --output ${IMAGE} || exit 255
 
-   IMAGE=flat_b_${t}_g${analoggain}.jpg
-   echo "raspistill --raw  --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analoggain} --digitalgain 1 --output ${IMAGE}"
-   raspistill --raw  --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analoggain} --digitalgain 1 --output ${IMAGE} || exit 255
+	IMAGE=flat_g${analoggain}_${i}_${t}_b.jpg
+	echo "raspistill --raw  --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analoggain} --digitalgain 1 --output ${IMAGE}"
+	raspistill --raw  --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analoggain} --digitalgain 1 --output ${IMAGE} || exit 255
 done

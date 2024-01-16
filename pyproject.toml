@@ -51,7 +51,8 @@ gonet-exposure = "gonetutils.exposure:main"
 script-files = [
     "scripts/photo.sh",
     "scripts/darks.sh",
-    "scripts/flats.sh"
+    "scripts/flats.sh",
+    "scripts/measure.sh"
 ]
 
 # pyproject.toml

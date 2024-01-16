@@ -41,42 +41,61 @@ log = logging.getLogger(__name__)
 def greater_or_equal(t0, t):
     return t >= t0
 
-
-def exposure(args):
-    t0 = args.t_min
-    tf = args.t_max
-    pps = args.pps
-    stops = int(round(math.log2(args.dn_max),0))
-    exposure_time_bag = set()
+def log_adu_plan(t0, t1, max_adu, ppl):
+    stops = int(round(math.log2(max_adu),0))
+    T = list()
     log.info("STOPS = %d",stops)
     for level in range(0, stops+1):
-        tseq = np.linspace(tf/tf/(2**(level+1)), tf/(2**level), num=pps).reshape(-1)
-        exposure_time_bag.update(tseq.tolist())
+        tseq = np.linspace(t1/(2**(level+1)), t1/(2**level), num=ppl)
+        if level == 0:
+            T.extend(tseq.tolist())
+        else:
+            # Discard the last point, as it was repeated with the previous iteration
+            T.extend(tseq.tolist()[:-1]) 
     greater_or_equal_t0 = functools.partial(greater_or_equal, t0)
-    log.info("Exposure time bag contains %d different exposures", len(exposure_time_bag))
-    T = list(filter(greater_or_equal_t0, exposure_time_bag))
-    log.info("After filtering, only %d different exposures", len(T))
-    if args.time:
-        for t in sorted( int(round(t*1000000,0)) for t in T):
-            print(f"{t:08d}")
+    log.info("Exposure time bag contains %d different exposures", len(T))
+    T = list(filter(greater_or_equal_t0, T))
+    log.info("After t0 filtering, only %d different exposures", len(T))
+    return T
+
+def linear_plan(t0, t1, n):
+    T = np.linspace(t0, t1, num=n)
+    return T
+
+def exposure(args):
+    if args.command == 'linear':
+        T = linear_plan(args.t0, args.t1, args.num_images)
     else:
-        for i in range(1,len(T)+1):
-            print(f"{i:03d}")
-
-
+        T = log_adu_plan(args.t0, args.t1, args.max_adu, args.points_per_level)
+    for i, t in enumerate(T, start=1):
+        print(f"{i:03d}_{int(t*1000000):07d}")
 
 # ===================================
 # MAIN ENTRY POINT SPECIFIC ARGUMENTS
 # ===================================
 
 def add_args(parser):
-    group1 = parser.add_mutually_exclusive_group(required=True)
-    group1.add_argument('--time',  action='store_true', help='display image and section statistics')
-    group1.add_argument('--index', action='store_true', help='display image histogram plot')
-    parser.add_argument('-t0', '--t_min', type=vfloat, default=0.001, help='Minimun exposure time in seconds')
-    parser.add_argument('-tf', '--t_max', type=vfloat, required=True, help='Maximun exposure time in seconds')
-    parser.add_argument('-n', '--dn_max', type=int,    required=True, help='Saturation DN value (i.e. 4095)')
-    parser.add_argument('-p', '--pps', type=int, default=5, help='Points per segment')
+    subparser = parser.add_subparsers(dest='command')
+
+    parser_linear = subparser.add_parser('linear', help='generate linear exposure plan')
+    parser_stops  = subparser.add_parser('stops', help='generate log2 exposure plan based on saturation ADU stops')
+
+    # ------------------------------
+    # Arguments for 'linear' command
+    # ------------------------------
+
+    parser_linear.add_argument('-t0', '--t0', type=vfloat, required=True, help='Minimun exposure time [secs]')
+    parser_linear.add_argument('-t1', '--t1', type=vfloat, required=True, help='Maximun exposure time [secs]')
+    parser_linear.add_argument('-n', '--num-images', type=int, required=True, help='Number of images to take')
+
+    # -----------------------------
+    # Arguments for 'stops' command
+    # -----------------------------
+
+    parser_stops.add_argument('-t0', '--t0', type=vfloat, required=True, help='Minimun exposure time [secs]')
+    parser_stops.add_argument('-t1', '--t1', type=vfloat, required=True, help='Minimun exposure time [secs]')
+    parser_stops.add_argument('-m', '--max-adu',  type=int, required=True, help='Saturation value in image [ADU]')
+    parser_stops.add_argument('-ppl', '--points-per-level',  type=int, default=5, help='Number of images per stop level')
   
 # MAIN ENTRY POINT
 # ================
