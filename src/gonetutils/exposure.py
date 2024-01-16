@@ -53,21 +53,22 @@ def log_adu_plan(t0, t1, max_adu, ppl):
             # Discard the last point, as it was repeated with the previous iteration
             T.extend(tseq.tolist()[:-1]) 
     greater_or_equal_t0 = functools.partial(greater_or_equal, t0)
-    log.info("Exposure time bag contains %d different exposures", len(T))
+    log.info("Stops exposure time plan contains %d different exposures", len(T))
     T = list(filter(greater_or_equal_t0, T))
     log.info("After t0 filtering, only %d different exposures", len(T))
-    log.info(T)
     return T
 
 def linear_plan(t0, t1, n):
-    T = np.linspace(t0, t1, num=n)
-    return T.tolist()
+    T = np.linspace(t0, t1, num=n).tolist()
+    log.info("Linear exposure time plan contains %d different exposures", len(T))
+    return T
 
 def exposure(args):
     if args.command == 'linear':
         T = linear_plan(args.t0, args.t1, args.num_images)
     else:
         T = log_adu_plan(args.t0, args.t1, args.max_adu, args.points_per_level)
+    log.info(T)
     for i, t in enumerate(T, start=1):
         print(f"{i:03d}_{int(round(t*1000000,0)):07d}")
 
