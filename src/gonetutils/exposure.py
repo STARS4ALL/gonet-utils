@@ -61,7 +61,7 @@ def log_adu_plan(t0, t1, max_adu, ppl):
 
 def linear_plan(t0, t1, n):
     T = np.linspace(t0, t1, num=n)
-    return T
+    return T.tolist()
 
 def exposure(args):
     if args.command == 'linear':
@@ -69,7 +69,7 @@ def exposure(args):
     else:
         T = log_adu_plan(args.t0, args.t1, args.max_adu, args.points_per_level)
     for i, t in enumerate(T, start=1):
-        print(f"{i:03d}_{int(t*1000000):07d}")
+        print(f"{i:03d}_{int(round(t*1000000),0):07d}")
 
 # ===================================
 # MAIN ENTRY POINT SPECIFIC ARGUMENTS
