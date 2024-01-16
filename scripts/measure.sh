@@ -5,12 +5,11 @@ read -p "Analog Gain [1..16], , hit CTRL+C to stop: " analog_gain
 read -p "central width , hit CTRL+C to stop: " width
 read -p "central height , hit CTRL+C to stop: " height
 
-EXPTIME=$(( usecs*1000000 ))
 IMAGE=photo.jpg
 for (( ; ; ))
 do
-   echo "raspistill --raw  --shutter ${EXPTIME} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${IMAGE}"
-   raspistill --raw  --shutter ${EXPTIME} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${IMAGE} || exit 255
+   echo "raspistill --raw  --shutter ${usecs} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${IMAGE}"
+   raspistill --raw  --shutter ${usecs} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${IMAGE} || exit 255
    echo "gonet-stats --console -i ${IMAGE} -wi ${width} -he ${height}"
    gonet-stats --console -i ${IMAGE} -wi ${width} -he ${height}
    sleep 2
