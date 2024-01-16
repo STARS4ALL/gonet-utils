@@ -69,7 +69,7 @@ def exposure(args):
     else:
         T = log_adu_plan(args.t0, args.t1, args.max_adu, args.points_per_level)
     for i, t in enumerate(T, start=1):
-        print(f"{i:03d}_{int(round(t*1000000),0):07d}")
+        print(f"{i:03d}_{int(round(t*1000000,0)):07d}")
 
 # ===================================
 # MAIN ENTRY POINT SPECIFIC ARGUMENTS
