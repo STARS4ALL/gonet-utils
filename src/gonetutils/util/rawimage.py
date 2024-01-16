@@ -188,6 +188,9 @@ class RawImage:
         metadata['focal_length'] = fractions.Fraction(str(exif.get('EXIF FocalLength', 0)))
         metadata['f_number'] = fractions.Fraction(str(exif.get('EXIF FNumber', 0)))
         metadata['datetime'] = str(exif.get('Image DateTime', None))
+        metadata['maker'] = str(exif.get('Image Make', None))
+        #metadata['note'] = str(exif.get('EXIF MakerNote', 'FOOOO'))
+        #log.info( metadata['note'])
 
         return metadata
 
