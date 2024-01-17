@@ -50,7 +50,9 @@ gonet-exposure = "gonetutils.exposure:main"
 [tool.setuptools]
 script-files = [
     "scripts/measure.sh",
-    "scripts/capture.sh"
+    "scripts/capture.sh",
+    "scripts/multi_dark.sh",
+    "scripts/multi_capture.sh"
 ]
 
 # pyproject.toml
