@@ -38,25 +38,36 @@ log = logging.getLogger(__name__)
 # =================
 # MAIN ENTRY POINTS
 # =================
-def greater_or_equal(t0, t):
-    return t >= t0
 
-def log_adu_plan(t0, t1, max_adu, ppl):
+def log_adu_plan(t0, t1, max_adu, ppl, reverse):
     stops = int(round(math.log2(max_adu),0))
     T = list()
     log.info("STOPS = %d",stops)
-    for level in range(0, stops+1):
-        tseq = np.linspace(t1/(2**(level+1)), t1/(2**level), num=ppl)
-        if level == 0:
-            T.extend(tseq.tolist())
-        else:
-            # Discard the last point, as it was repeated with the previous iteration
-            T.extend(tseq.tolist()[:-1]) 
-    greater_or_equal_t0 = functools.partial(greater_or_equal, t0)
-    log.info("Stops exposure time plan contains %d different exposures", len(T))
-    T = list(filter(greater_or_equal_t0, T))
-    log.info("After t0 filtering, only %d different exposures", len(T))
+    if reverse:
+        nt0 = t0; nt1 = t0 + (t1-t0)/2
+        for level in range(0, stops+1):
+            tseq = np.linspace(nt0, nt1, num=ppl)
+            nt0 = nt1
+            nt1 = nt0 + (t1 - nt0)/2
+            if level == 0:
+                T.extend(tseq.tolist())
+            else:
+                # Discard the first point, as it was repeated with the previous iteration
+                T.extend(tseq.tolist()[1:]) 
+    else:
+        nt1 = t1; nt0 = t1 - (t1-t0)/2
+        for level in range(0, stops+1):
+            tseq = np.linspace(nt0, nt1, num=ppl)
+            nt1 = nt0
+            nt0 = nt1 - (nt1-t0)/2
+            if level == 0:
+                T.extend(tseq.tolist())
+            else:
+                # Discard the last point, as it was repeated with the previous iteration
+                T.extend(tseq.tolist()[:-1]) 
+    log.info("Exposure time plan contains %d different exposures", len(T))
     return T
+
 
 def linear_plan(t0, t1, n):
     T = np.linspace(t0, t1, num=n).tolist()
@@ -98,6 +109,7 @@ def add_args(parser):
     parser_stops.add_argument('-t1', '--t1', type=vfloat, required=True, help='Minimun exposure time [secs]')
     parser_stops.add_argument('-m', '--max-adu',  type=int, required=True, help='Saturation value in image [ADU]')
     parser_stops.add_argument('-ppl', '--points-per-level',  type=int, default=5, help='Number of images per stop level')
+    parser_stops.add_argument('-r','--reverse',  action='store_true', help='reverse point distribution')
   
 # MAIN ENTRY POINT
 # ================

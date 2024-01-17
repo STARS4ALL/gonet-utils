@@ -26,10 +26,10 @@ ppl=${3:-$DEF_POINTS_PER_LEVEL}
 
 if [[ "$exposure_plan" = "linear" ]]
 then
-  	echo "gonet-exposure --log-file ${DEF_LOG_FILE} linear -t0 ${tmin}/1000000 -t1 ${tmax}/1000000 -n ${npoints})"
+  	echo "gonet-exposure --log-file ${DEF_LOG_FILE} linear -t0 ${tmin}/1000000 -t1 ${tmax}/1000000 -n ${npoints}"
   	exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} linear -t0 ${tmin}/1000000 -t1 ${tmax}/1000000 -n ${npoints})
 else
-	echo "gonet-exposure --log-file ${DEF_LOG_FILE} stops -t0 ${tmin}/1000000 -t1 ${tmax}/1000000 -m ${max_dn} -ppl ${ppl})"
+	echo "gonet-exposure --log-file ${DEF_LOG_FILE} stops -t0 ${tmin}/1000000 -t1 ${tmax}/1000000 -m ${max_dn} -ppl ${ppl}"
   	exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} stops -t0 ${tmin}/1000000 -t1 ${tmax}/1000000 -m ${max_dn} -ppl ${ppl})
 fi
 
