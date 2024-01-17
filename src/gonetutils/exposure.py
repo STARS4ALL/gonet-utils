@@ -39,7 +39,7 @@ log = logging.getLogger(__name__)
 # MAIN ENTRY POINTS
 # =================
 
-def log_adu_plan(t0, t1, max_adu, ppl, reverse):
+def stops_plan(t0, t1, max_adu, ppl, reverse):
     stops = int(round(math.log2(max_adu),0))
     T = list()
     log.info("STOPS = %d",stops)
@@ -74,11 +74,18 @@ def linear_plan(t0, t1, n):
     log.info("Linear exposure time plan contains %d different exposures", len(T))
     return T
 
+def log_plan(t0, t1, n):
+    T = np.logspace(math.log2(t0), math.log2(t1),  num=n, base=2).tolist()
+    log.info("Log exposure time plan contains %d different exposures", len(T))
+    return T
+
 def exposure(args):
     if args.command == 'linear':
         T = linear_plan(args.t0, args.t1, args.num_images)
+    elif args.command == 'log':
+        T = log_plan(args.t0, args.t1, args.num_images)
     else:
-        T = log_adu_plan(args.t0, args.t1, args.max_adu, args.points_per_level, args.reverse)
+        T = stops_plan(args.t0, args.t1, args.max_adu, args.points_per_level, args.reverse)
     log.info(T)
     for i, t in enumerate(T, start=1):
         print(f"{i:03d}_{int(round(t*1000000,0)):07d}")
@@ -91,6 +98,7 @@ def add_args(parser):
     subparser = parser.add_subparsers(dest='command')
 
     parser_linear = subparser.add_parser('linear', help='generate linear exposure plan')
+    parser_log  = subparser.add_parser('log', help='generate log2 exposure plan')
     parser_stops  = subparser.add_parser('stops', help='generate log2 exposure plan based on saturation ADU stops')
 
     # ------------------------------
@@ -100,6 +108,14 @@ def add_args(parser):
     parser_linear.add_argument('-t0', '--t0', type=vfloat, required=True, help='Minimun exposure time [secs]')
     parser_linear.add_argument('-t1', '--t1', type=vfloat, required=True, help='Maximun exposure time [secs]')
     parser_linear.add_argument('-n', '--num-images', type=int, required=True, help='Number of images to take')
+
+    # ------------------------------
+    # Arguments for 'log' command
+    # ------------------------------
+
+    parser_log.add_argument('-t0', '--t0', type=vfloat, required=True, help='Minimun exposure time [secs]')
+    parser_log.add_argument('-t1', '--t1', type=vfloat, required=True, help='Minimun exposure time [secs]')
+    parser_log.add_argument('-n', '--num-images', type=int, required=True, help='Number of images to take')
 
     # -----------------------------
     # Arguments for 'stops' command
