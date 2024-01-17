@@ -10,7 +10,7 @@ read -p "central width [$DEF_WIDTH]: " width
 read -p "central height [$DEF_HEIGHT]: " height
 
 width=${width:-$DEF_WIDTH}
-height=${height:-$DEF_WIDTH}
+height=${height:-$DEF_HEIGHT}
 analog_gain=${analog_gain:-$DEF_GAIN}
 
 IMAGE=photo.jpg
