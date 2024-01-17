@@ -33,23 +33,24 @@ else
 	reverse=""
 fi
 
-
-if [[ "$exposure_plan" = "linear" ]]
-then
-  	echo "gonet-exposure --log-file ${DEF_LOG_FILE} linear -t0 ${tmin}/1000000 -t1 ${tmax}/1000000 -n ${npoints}"
-  	exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} linear -t0 ${tmin}/1000000 -t1 ${tmax}/1000000 -n ${npoints})
-else
-	echo "gonet-exposure --log-file ${DEF_LOG_FILE} stops -t0 ${tmin}/1000000 -t1 ${tmax}/1000000 -m ${max_dn} -ppl ${ppl} ${reverse}"
-  	exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} stops -t0 ${tmin}/1000000 -t1 ${tmax}/1000000 -m ${max_dn} -ppl ${ppl} ${reverse})
-fi
+echo "TAKING A SERIES OF IMAGES AT DIFFENTENT ANALOG GAINS, SCALING DOWN THE MAX. EXP. TIME"
 
 for (( analog_gain=1; analog_gain<=16; analog_gain++  ))
 do
+	tmax=$(( $tmax / $analog_gain))	# Scale tmax according to gain
+	if [[ "$exposure_plan" = "linear" ]]
+	then
+	  	echo "gonet-exposure --log-file ${DEF_LOG_FILE} linear -t0 ${tmin}/1000000 -t1 ${tmax}/1000000 -n ${npoints}"
+	  	exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} linear -t0 ${tmin}/1000000 -t1 ${tmax}/1000000 -n ${npoints})
+	else
+		echo "gonet-exposure --log-file ${DEF_LOG_FILE} stops -t0 ${tmin}/1000000 -t1 ${tmax}/1000000 -m ${max_dn} -ppl ${ppl} ${reverse}"
+	  	exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} stops -t0 ${tmin}/1000000 -t1 ${tmax}/1000000 -m ${max_dn} -ppl ${ppl} ${reverse})
+	fi
+
 	for i_t in ${exposure_times}
 	do
 		i=${i_t:0:3}
 		t=${i_t:4:7}
-		t=$(( t / analog_gain ))
 		image=${tag}_g${analog_gain}_${i}_${t}_a.jpg
 		echo "raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image}"
 		raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image} || exit 255

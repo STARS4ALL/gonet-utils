@@ -51,7 +51,7 @@ gonet-exposure = "gonetutils.exposure:main"
 script-files = [
     "scripts/measure.sh",
     "scripts/capture.sh",
-    "scripts/multi_dark.sh",
+    "scripts/multi_gain.sh",
     "scripts/multi_capture.sh"
 ]
 
