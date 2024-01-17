@@ -163,21 +163,36 @@ class RawImage:
 
     def __init__(self, path):
         self._path = path
-        self._metadata()
+        self._color_desc = None
+        self._cfa = None
+        self._biases = None
+        self._white_levels = None
+        self._metadata = None
+        self._minimal_metadata()
+       
 
-    def _metadata(self):
-        '''Gather as much rawpy stack access as possible for efficiency'''
-        with rawpy.imread(self._path) as stack:
-            self._color_desc = stack.color_desc.decode('utf-8')
-            self._shape = stack.raw_image.shape
-            self._cfa = ''.join([ self.BAYER_LETTER[stack.raw_pattern[row,column]] for row in (1,0) for column in (1,0)])
-            self._biases = stack.black_level_per_channel
-            self._white_levels = stack.camera_white_level_per_channel
+    def _img(self, img):
+        '''Gather as much rawpy image access as possible for efficiency'''
+        with rawpy.imread(self._path) as img:
+            self._color_desc = img.color_desc.decode('utf-8')
+            # self._shape = img.raw_image.shape
+            self._cfa = ''.join([ self.BAYER_LETTER[img.raw_pattern[row,column]] for row in (1,0) for column in (1,0)])
+            self._biases = img.black_level_per_channel
+            self._white_levels = img.camera_white_level_per_channel
 
-
-    def exif(self):
+    def _minimal_metadata(self):
         with open(self._path, 'rb') as f:
             exif = exifread.process_file(f, details=False)
+        if not exif:
+            raise ValueError('Could not get ExifImageWidth, ExifImageWidth tags')
+        width  = int(str(exif.get('EXIF ExifImageWidth')))
+        height = int(str(exif.get('EXIF ExifImageLength')))
+        self._exposure = fractions.Fraction(str(exif.get('EXIF ExposureTime', 0)))
+        self._shape = (height, width)
+
+    def _exif(self):
+        with open(self._path, 'rb') as f:
+            exif = exifread.process_file(f, details=True)
         # This ensures that non EXIF images are detected and an exeption is raised
         metadata = dict()
         if not exif:
@@ -189,10 +204,12 @@ class RawImage:
         metadata['f_number'] = fractions.Fraction(str(exif.get('EXIF FNumber', 0)))
         metadata['datetime'] = str(exif.get('Image DateTime', None))
         metadata['maker'] = str(exif.get('Image Make', None))
-        #metadata['note'] = str(exif.get('EXIF MakerNote', 'FOOOO'))
-        #log.info( metadata['note'])
-
+        metadata['note'] = str(exif.get('EXIF MakerNote', None)) # Useless fo far ...
         return metadata
+
+    # ----------
+    # Public API 
+    # ----------
 
     def label(self, i):
         return self.LABELS[i]
@@ -200,28 +217,55 @@ class RawImage:
     def name(self):
         return os.path.basename(self._path)
 
-    def cfa_pattern(self):
-        '''Returns the Bayer pattern as RGGB, BGGR, GRBG, GBRG strings '''
-        if self._color_desc != 'RGBG':
-            raise UnsupporteCFAError(self._color_desc)
-        return self._cfa
-
-    def saturation_levels(self):
-        return self._white_levels
-
-    def black_levels(self):
-        return self._biases
-
     def shape(self):
         return (self._shape[0]//2,  self._shape[1]//2) # Debayered image total dimensions
 
     def roi(self, n_x0=None, n_y0=None, n_width=1.0, n_heigth=1.0):
         return Rect.from_normalized(self._shape[1], self._shape[0], n_x0, n_y0, n_width, n_heigth)
 
+    def exposure(self):
+        '''Useul for image list sorting by exposure time'''
+        return self._exposure
+
+    def exif(self):
+        if self._metadata is None:
+            self._metadata = self._exif()
+        return self._metadata
+
+    def cfa_pattern(self):
+        '''Returns the Bayer pattern as RGGB, BGGR, GRBG, GBRG strings'''
+        if self._color_desc is None:
+            self._img()
+        if self._color_desc != 'RGBG':
+            raise UnsupporteCFAError(self._color_desc)
+        return self._cfa
+
+    def saturation_levels(self, channels=None):
+        channels = self.CHANNELS if channels is None else channels
+        if 'G' in channels:
+            raise NotImplementedError("saturation_levels on G=(G1+G2)/2 channel not available")
+        if self._white_levels is None:
+            self._img()
+        if self._white_levels is None:
+            raise NotImplementedError("saturation_levels for this image not available using LibRaw")
+        return [self._white_levels[self.CHANNELS.index(ch)] for ch in channels]
+
+    def black_levels(self, channels=None):
+        channels = self.CHANNELS if channels is None else channels
+        if 'G' in channels:
+            raise NotImplementedError("black_levels on G=(G1+G2)/2 channel not available")
+        if self._biases is None:
+            self._img()
+        return [self._biases[self.CHANNELS.index(ch)] for ch in channels]
+
     def debayered(self, roi=None, channels=None):
         '''Get a stack of Bayer colour planes selected by the channels sequence'''
-        cfa_pattern = self.cfa_pattern()
         with rawpy.imread(self._path) as img:
+            self._color_desc = img.color_desc.decode('utf-8')
+            self._cfa = ''.join([ self.BAYER_LETTER[img.raw_pattern[row,column]] for row in (1,0) for column in (1,0)])
+            self._biases = img.black_level_per_channel
+            self._white_levels = img.camera_white_level_per_channel
+            cfa_pattern = self._cfa
             raw_pixels_list = list()
             for channel in self.CHANNELS:
                 x = self.CFA_OFFSETS[cfa_pattern][channel]['x']
@@ -236,24 +280,28 @@ class RawImage:
             custom_list = raw_pixels_list
         else:
             custom_list = list()
-            for i, ch in enumerate(channels):
+            for ch in channels:
                 if ch == 'G':
                     aver_green = (raw_pixels_list[1] + raw_pixels_list[2]) // 2
                     custom_list.append(aver_green)
                 else:
-                    k = self.CHANNELS.index(ch)
-                    custom_list.append(raw_pixels_list[k])
+                    i = self.CHANNELS.index(ch)
+                    custom_list.append(raw_pixels_list[i])
         return np.stack(custom_list)
 
     def statistics(self, roi=None, channels=None):
         '''In-place statistics calculation for RPi Zero'''
-        cfa_pattern = self.cfa_pattern()
         channels = self.CHANNELS if channels is None else channels
         if 'G' in channels:
-            raise NotImplementedError(f"In-place statistics on G=(G1+G2)/2 channel not available")
+            raise NotImplementedError("In-place statistics on G=(G1+G2)/2 channel not available")
         with rawpy.imread(self._path) as img:
             # very imporatnt to be under the image context manager
             # when doing manipulations on img.raw_image
+            self._color_desc = img.color_desc.decode('utf-8')
+            self._cfa = ''.join([ self.BAYER_LETTER[img.raw_pattern[row,column]] for row in (1,0) for column in (1,0)])
+            self._biases = img.black_level_per_channel
+            self._white_levels = img.camera_white_level_per_channel
+            cfa_pattern = self._cfa
             average, stdev = dict(), dict()
             for channel in channels:
                 x = self.CFA_OFFSETS[cfa_pattern][channel]['x']
@@ -266,3 +314,18 @@ class RawImage:
                 average[channel], stdev[channel] = round(raw_pixels.mean(),1), round(raw_pixels.std(),3)
         return average, stdev
 
+
+# Convenience function when plotting titles
+def imageset_metadata(path, x0, y0, width, height, channels):
+    '''returns common metadata for all the image set with different exposure times'''
+    image = RawImage(path)
+    roi = image.roi(x0, y0, width, height)
+    exif = image.exif()
+    return {
+        'camera': exif['camera'],
+        'iso': exif['iso'],
+        'roi': roi,
+        'cols': image.shape()[0],
+        'rows': image.shape()[1],
+        'channels': channels
+    }
