@@ -45,7 +45,7 @@ def log_adu_plan(t0, t1, max_adu, ppl, reverse):
     log.info("STOPS = %d",stops)
     if reverse:
         nt0 = t0; nt1 = t0 + (t1-t0)/2
-        for level in range(0, stops+1):
+        for level in range(0, stops):
             tseq = np.linspace(nt0, nt1, num=ppl)
             nt0 = nt1
             nt1 = nt0 + (t1 - nt0)/2
@@ -56,7 +56,7 @@ def log_adu_plan(t0, t1, max_adu, ppl, reverse):
                 T.extend(tseq.tolist()[1:]) 
     else:
         nt1 = t1; nt0 = t1 - (t1-t0)/2
-        for level in range(0, stops+1):
+        for level in range(0, stops):
             tseq = np.linspace(nt0, nt1, num=ppl)
             nt1 = nt0
             nt0 = nt1 - (nt1-t0)/2
