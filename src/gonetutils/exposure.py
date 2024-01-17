@@ -78,7 +78,7 @@ def exposure(args):
     if args.command == 'linear':
         T = linear_plan(args.t0, args.t1, args.num_images)
     else:
-        T = log_adu_plan(args.t0, args.t1, args.max_adu, args.points_per_level)
+        T = log_adu_plan(args.t0, args.t1, args.max_adu, args.points_per_level, args.reverse)
     log.info(T)
     for i, t in enumerate(T, start=1):
         print(f"{i:03d}_{int(round(t*1000000,0)):07d}")
