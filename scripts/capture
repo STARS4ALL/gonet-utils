@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# -------------------------------------------------------------
+# Capture a sequence of image pairs with varying exposure times
+# -------------------------------------------------------------
+
+DEF_LOG_FILE="exposure_plan.log"
+DEF_REVERSE="n"
+DEF_NPOINTS=50
+DEF_POINTS_PER_LEVEL=5 # For the "stops" exposure plan
+DEF_MAX_DN=4095 # For the "stops" exposure plan
+DEF_TAG="flat"
+DEF_GAIN=1
+DEF_EXPOSURE_PLAN="combi"
+
+
+read -p "Exposure plan (linear|log|combi|stops) [$DEF_EXPOSURE_PLAN]: " exposure_plan
+exposure_plan=${exposure_plan:-$DEF_EXPOSURE_PLAN}
+read -p "Start Exposure time (us) Tinitial: " tinitial
+read -p "End Exposure time (us): Tfinal: " tfinal
+read -p "Analog Gain (1..16) [$DEF_GAIN]: " analog_gain
+analog_gain=${analog_gain:-$DEF_GAIN}
+read -p "Sequence tag [$DEF_TAG]: " tag
+tag=${tag:-$DEF_TAG}
+
+
+if [[ "$exposure_plan" = "linear" ]]
+then
+	read -p "Number of images to take [$DEF_NPOINTS]: " npoints
+	npoints=${npoints:-$DEF_NPOINTS}
+	echo "gonet-exposure --log-file ${DEF_LOG_FILE} linear -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -n ${npoints}"
+	exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} linear -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -n ${npoints})
+elif [[ "$exposure_plan" = "log" ]]
+then
+	read -p "Number of images to take [$DEF_NPOINTS]: " npoints
+	npoints=${npoints:-$DEF_NPOINTS}
+	read -p "Reverse exposure plan (y/n) [$DEF_REVERSE]: " reverse
+	reverse=${reverse:-$DEF_REVERSE}
+	if [[ "$reverse" = "y" ]]; then reverse="-r" ; else reverse=""; fi
+	echo "gonet-exposure --log-file ${DEF_LOG_FILE} log -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -n ${npoints} ${reverse}"
+	exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} linear -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -n ${npoints} ${reverse})
+elif [[ "$exposure_plan" = "combi" ]]
+then
+	read -p "Lower cut-off exposure time (${tinitial} < Tco < Tc1 < ${tfinal})  Tc0 (us): " tc0
+	read -p "Upper cut-off exposure time (${tinitial} < ${tco} < Tc1 < ${tfinal}) Tc1 (us): " tc1
+	read -p "Number of images to take [$DEF_NPOINTS]: " npoints
+	npoints=${npoints:-$DEF_NPOINTS}
+	read -p "Reverse exposure plan (y/n) [$DEF_REVERSE]: " reverse
+	reverse=${reverse:-$DEF_REVERSE}
+	if [[ "$reverse" = "y" ]]; then reverse="-r" ; else reverse=""; fi
+	exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} combi -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -tc0 ${tc0}/1000000 -tc1 ${tc1}/1000000 -n ${npoints} ${reverse})
+else
+	read -p "Number of images per level to take [$DEF_POINTS_PER_LEVEL]: " ppl
+	ppl=${ppl:-$DEF_POINTS_PER_LEVEL}
+	read -p "Saturation value (y/n) [$DEF_MAX_DN]: " max_dn
+	max_dn=${max_dn:-$DEF_MAX_DN}
+	read -p "Reverse exposure plan (y/n) [$DEF_REVERSE]: " reverse
+	reverse=${reverse:-$DEF_REVERSE}
+	if [[ "$reverse" = "y" ]]; then reverse="-r" ; else reverse=""; fi
+	echo "gonet-exposure --log-file ${DEF_LOG_FILE} stops -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -m ${max_dn} -ppl ${ppl} ${reverse}"
+	exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} combi -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -m ${max_dn} -ppl ${ppl} ${reverse})
+fi
+
+for i_t in ${exposure_times}
+do
+	i=${i_t:0:3}
+	t=${i_t:4:7}
+	image=${tag}_g${analog_gain}_${i}_${t}_a.jpg
+	echo "raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image}"
+	raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image} || exit 255
+
+	image=${tag}_g${analog_gain}_${i}_${t}_b.jpg
+	echo "raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image}"
+	raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image} || exit 255
+done  
