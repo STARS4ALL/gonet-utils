@@ -41,7 +41,12 @@ log = logging.getLogger(__name__)
 def stats(args):
     image = RawImage(args.input_file)
     roi = image.roi(args.x0, args.y0, args.width, args.height)
-    aver, std = image.statistics(roi)
+    stats = image.statistics(roi)
+    aver = dict()
+    std = dict()
+    for i , ch in enumerate(image.CHANNELS):
+        aver[ch] = stats[i][0]
+        std[ch]  = stats[i][1]
     log.info("ROI %s (%dx%d)", roi, roi.width(), roi.height())
     log.info("[R]=%.1f \u03C3=%.2f, [G1]=%.1f \u03C3=%.2f, [G2]=%.1f \u03C3=%.2f, [B]=%.1f \u03C3 = %.2f", 
         aver['R'], std['R'], aver['G1'], std['G1'], aver['G2'], std['G2'], aver['B'], std['B'])
