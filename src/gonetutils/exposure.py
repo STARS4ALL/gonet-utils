@@ -131,20 +131,6 @@ def plan(args):
         export_to_csv(args.csv_file, T)
     for i, t in enumerate(T, start=1):
         print(f"{i:03d}_{int(round(t*1000000,0)):07d}")
-    
-
-def plan(args):
-    if args.command == 'linear':
-        T = linear_plan(args.t_initial, args.t_final, args.num_images, endpoint=True)
-    elif args.command == 'log':
-        T = log_plan(args.t_initial, args.t_final, args.num_images, args.reverse, endpoint=True)
-    elif args.command == 'combi':
-        T = combi_plan(args.t_initial, args.t_final, args.num_images, args.t_cut_0, args.t_cut_1)
-    else:
-        T = stops_plan(args.t_initial, args.t_final, args.max_adu, args.points_per_level, args.reverse)
-    log.info("Sequence of exposures: %s", T)
-    for i, t in enumerate(T, start=1):
-        print(f"{i:03d}_{int(round(t*1000000,0)):07d}")
 
 
 # ===================================

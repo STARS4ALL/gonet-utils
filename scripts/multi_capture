@@ -22,42 +22,48 @@ tag=${tag:-$DEF_TAG}
 echo "TAKING A SERIES OF IMAGES AT DIFFENTENT ANALOG GAINS, SCALING DOWN THE MAX. EXP. TIME"
 
 if [[ "$exposure_plan" = "linear" ]]
-	then
-		read -p "Number of images to take [$DEF_NPOINTS]: " npoints
-		npoints=${npoints:-$DEF_NPOINTS}
-		echo "gonet-exposure --log-file ${DEF_LOG_FILE} linear -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -n ${npoints}"
-		exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} linear -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -n ${npoints})
-	elif [[ "$exposure_plan" = "log" ]]
-	then
-		read -p "Number of images to take [$DEF_NPOINTS]: " npoints
-		npoints=${npoints:-$DEF_NPOINTS}
-		read -p "Reverse exposure plan (y/n) [$DEF_REVERSE]: " reverse
-		reverse=${reverse:-$DEF_REVERSE}
-		if [[ "$reverse" = "y" ]]; then reverse="-r" ; else reverse=""; fi
-		echo "gonet-exposure --log-file ${DEF_LOG_FILE} log -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -n ${npoints} ${reverse}"
-		exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} linear -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -n ${npoints} ${reverse})
-	elif [[ "$exposure_plan" = "combi" ]]
-	then
-		read -p "Lower cut-off exposure time (${tinitial} < Tco < Tc1 < ${tfinal})  Tc0 (us): " tc0
-		read -p "Upper cut-off exposure time (${tinitial} < ${tco} < Tc1 < ${tfinal}) Tc1 (us): " tc1
-		read -p "Number of images to take [$DEF_NPOINTS]: " npoints
-		npoints=${npoints:-$DEF_NPOINTS}
-		read -p "Reverse exposure plan (y/n) [$DEF_REVERSE]: " reverse
-		reverse=${reverse:-$DEF_REVERSE}
-		if [[ "$reverse" = "y" ]]; then reverse="-r" ; else reverse=""; fi
-		exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} combi -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -tc0 ${tc0}/1000000 -tc1 ${tc1}/1000000 -n ${npoints} ${reverse})
-	else
-		read -p "Number of images per level to take [$DEF_POINTS_PER_LEVEL]: " ppl
-		ppl=${ppl:-$DEF_POINTS_PER_LEVEL}
-		DEF_MAX_DN=4095 # For the "stops" exposure plan
-		read -p "Saturation value (y/n) [$DEF_MAX_DN]: " max_dn
-		max_dn=${max_dn:-$DEF_MAX_DN}
-		read -p "Reverse exposure plan (y/n) [$DEF_REVERSE]: " reverse
-		reverse=${reverse:-$DEF_REVERSE}
-		if [[ "$reverse" = "y" ]]; then reverse="-r" ; else reverse=""; fi
-		echo "gonet-exposure --log-file ${DEF_LOG_FILE} stops -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -m ${max_dn} -ppl ${ppl} ${reverse}"
-		exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} combi -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -m ${max_dn} -ppl ${ppl} ${reverse})
-	fi
+then
+	read -p "Number of images to take [$DEF_NPOINTS]: " npoints
+	npoints=${npoints:-$DEF_NPOINTS}
+	echo "gonet-exposure --log-file ${DEF_LOG_FILE} linear -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -n ${npoints}"
+	exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} linear -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -n ${npoints})
+elif [[ "$exposure_plan" = "log" ]]
+then
+	read -p "Number of images to take [$DEF_NPOINTS]: " npoints
+	npoints=${npoints:-$DEF_NPOINTS}
+	read -p "Reverse exposure plan (y/n) [$DEF_REVERSE]: " reverse
+	reverse=${reverse:-$DEF_REVERSE}
+	if [[ "$reverse" = "y" ]]; then reverse="-r" ; else reverse=""; fi
+	echo "gonet-exposure --log-file ${DEF_LOG_FILE} log -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -n ${npoints} ${reverse}"
+	exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} log -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -n ${npoints} ${reverse})
+elif [[ "$exposure_plan" = "combilog" ]]
+then
+	read -p "Number of images to take [$DEF_NPOINTS]: " npoints
+	npoints=${npoints:-$DEF_NPOINTS}
+	echo "gonet-exposure --log-file ${DEF_LOG_FILE} log -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -n ${npoints}"
+	exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} combilog -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -n ${npoints})
+elif [[ "$exposure_plan" = "stops" ]]
+then
+	read -p "Number of images per level to take [$DEF_POINTS_PER_LEVEL]: " ppl
+	ppl=${ppl:-$DEF_POINTS_PER_LEVEL}
+	read -p "Saturation value [$DEF_MAX_DN]: " max_dn
+	max_dn=${max_dn:-$DEF_MAX_DN}
+	read -p "Reverse exposure plan (y/n) [$DEF_REVERSE]: " reverse
+	reverse=${reverse:-$DEF_REVERSE}
+	if [[ "$reverse" = "y" ]]; then reverse="-r" ; else reverse=""; fi
+	echo "gonet-exposure --log-file ${DEF_LOG_FILE} stops -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -m ${max_dn} -ppl ${ppl} ${reverse}"
+	exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} stops -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -m ${max_dn} -ppl ${ppl} ${reverse})
+elif [[ "$exposure_plan" = "combistops" ]]
+then
+	read -p "Number of images per level to take [$DEF_POINTS_PER_LEVEL]: " ppl
+	ppl=${ppl:-$DEF_POINTS_PER_LEVEL}
+	read -p "Saturation value [$DEF_MAX_DN]: " max_dn
+	max_dn=${max_dn:-$DEF_MAX_DN}
+	echo "gonet-exposure --log-file ${DEF_LOG_FILE} stops -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -m ${max_dn} -ppl ${ppl}"
+	exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} combistops -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -m ${max_dn} -ppl ${ppl})
+else
+	echo "ERROR. Exposure plan ${exposure_plan} not supported"
+fi
 
 for (( analog_gain=1; analog_gain<=16; analog_gain++  ))
 do
