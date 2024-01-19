@@ -79,13 +79,13 @@ def arg_parser(name, version, description):
     # ---------------------------------------
 
     parser.add_argument('--version', action='version', version='{0} {1}'.format(name, version))
+    parser.add_argument('--console', action='store_true', help='Log to console.')
+    parser.add_argument('--log-file', type=str, metavar="<FILE>", default=None, help='Log to file.')
     group0 = parser.add_mutually_exclusive_group()
     group0.add_argument('--verbose', action='store_true', help='Verbose output.')
     group0.add_argument('--quiet',   action='store_true', help='Quiet output.')
-    parser.add_argument('--console', action='store_true', help='Log to console.')
-    parser.add_argument('--log-file', type=str, default=None, help='Optional log file')
     parser.add_argument('--modules', type=str, default=None, action='store', 
-        help='comma separated list of modules to activate debug level upon')
+        help='comma separated list of modules to activate debug level upon.')
 
     return parser
 

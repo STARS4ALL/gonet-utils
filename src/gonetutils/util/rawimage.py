@@ -22,6 +22,10 @@ import rawpy
 import exifread
 import numpy as np
 
+# ---------
+# Constants
+# ---------
+
 log = logging.getLogger(__name__)
 
 # ----------
