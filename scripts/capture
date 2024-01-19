@@ -23,7 +23,6 @@ analog_gain=${analog_gain:-$DEF_GAIN}
 read -p "Sequence tag [$DEF_TAG]: " tag
 tag=${tag:-$DEF_TAG}
 
-
 if [[ "$exposure_plan" = "linear" ]]
 then
 	read -p "Number of images to take [$DEF_NPOINTS]: " npoints
