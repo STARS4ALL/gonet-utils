@@ -32,7 +32,7 @@ do
 	echo "raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image}"
 	raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image} || exit 255
 	wvl=$((wvl+wavl_step))
-	read -p "Ready for the next wavelength ($wvl nm)? [y/n]: " answer
+	read -p "Ready for the next wavelength ($wvl nm)? [y]: " answer
 	if [[ "$answer" != "y" ]]
 	then
 		break
