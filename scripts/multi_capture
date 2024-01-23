@@ -4,22 +4,33 @@
 # Capture a sequence of image pairs with varying exposure times
 # -------------------------------------------------------------
 
+# Makes sure that floating point numers are formated with . and not ,
+LC_NUMERIC=C
+
 DEF_LOG_FILE="exposure_plan.log"
 DEF_REVERSE="n"
 DEF_NPOINTS=50
 DEF_POINTS_PER_LEVEL=5 # For the "stops" exposure plan
 DEF_MAX_DN=4095 # For the "stops" exposure plan
 DEF_TAG="flat"
-DEF_EXPOSURE_PLAN="combi"
+DEF_EXPOSURE_PLAN="combistops"
+DEF_START_GAIN=1
+DEF_END_GAIN=16
+DEF_GAIN_STEP=1
 
-read -p "Exposure plan (linear|log|combi|stops) [$DEF_EXPOSURE_PLAN]: " exposure_plan
-exposure_plan=${exposure_plan:-$DEF_EXPOSURE_PLAN}
+read -p "Initial Gain (1.0 .. 16.0) [$DEF_START_GAIN]: " g_initial
+read -p "Final Gain (1.0 .. 16.0) [$DEF_END_GAIN]: " g_final
+read -p "Gain step (1.0 .. 16.0) [$DEF_GAIN_STEP]: " g_step
+read -p "Exposure plan (linear|log|stops|combistops|combilog) [$DEF_EXPOSURE_PLAN]: " exposure_plan
 read -p "Start Exposure time (us) Tinitial: " tinitial
 read -p "End Exposure time (us): Tfinal: " tfinal
 read -p "Sequence tag [$DEF_TAG]: " tag
-tag=${tag:-$DEF_TAG}
 
-echo "TAKING A SERIES OF IMAGES AT DIFFENTENT ANALOG GAINS, SCALING DOWN THE MAX. EXP. TIME"
+g_initial=${g_initial:-$DEF_START_GAIN}
+g_final=${g_final:-$DEF_END_GAIN}
+g_step=${g_step:-$DEF_GAIN_STEP}
+exposure_plan=${exposure_plan:-$DEF_EXPOSURE_PLAN}
+tag=${tag:-$DEF_TAG}
 
 if [[ "$exposure_plan" = "linear" ]]
 then
@@ -65,15 +76,20 @@ else
 	echo "ERROR. Exposure plan ${exposure_plan} not supported"
 fi
 
-for (( analog_gain=1; analog_gain<=16; analog_gain++  ))
+gi=$(echo "scale=2; $g_initial * 100" | bc | xargs -0 printf "%.0f")
+gf=$(echo "scale=2; $g_final * 100" | bc | xargs -0 printf "%.0f")
+gs=$(echo "scale=2; $g_step * 100" | bc | xargs -0 printf "%.0f")
+gc=$gi
+
+while [ $gc -le $gf ]
 do
-	tfinal=$(( $tfinal / $analog_gain ))	# Scale tfinal according to gain
+	analog_gain=$(echo "scale=2; $gc / 100" | bc)
 	# Take the images
+	g=$(printf '%05.2f' $analog_gain)
 	for i_t in ${exposure_times}
 	do
 		i=${i_t:0:3}
 		t=${i_t:4:7}
-		g=$(printf "%02d" $analog_gain)
 		image=${tag}_g${g}_${i}_${t}_a.jpg
 		echo "raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image}"
 		raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image} || exit 255
@@ -81,5 +97,6 @@ do
 		image=${tag}_g${g}_${i}_${t}_b.jpg
 		echo "raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image}"
 		raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image} || exit 255
-	done  
+	done
+ 	gc=$(( gc + gs ))
 done
