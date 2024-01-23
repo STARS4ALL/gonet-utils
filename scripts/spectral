@@ -28,7 +28,8 @@ i=001
 for (( wvl=wavel_start; wvl<=wavel_end; ))
 do
 	wv=$(printf '%04d' $wvl)
-	image=${tag}_${wv}nm_g${analog_gain}_${i}_${t}.jpg
+	g=$(printf "%02d" $analog_gain)
+	image=${tag}_${wv}nm_g${g}_${i}_${t}.jpg
 	echo "raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image}"
 	raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image} || exit 255
 	wvl=$((wvl+wavl_step))
