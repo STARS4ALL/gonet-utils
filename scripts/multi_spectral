@@ -1,0 +1,46 @@
+#!/bin/bash
+
+# -------------------------------------------------------------
+# Capture a sequence of image pairs with varying exposure times
+# -------------------------------------------------------------
+
+DEF_LOG_FILE="spectral_exposure_plan.log"
+DEF_REVERSE="n"
+DEF_NPOINTS=15
+DEF_TAG="flat"
+DEF_GAIN=1
+DEF_EXPOSURE_PLAN="linear"
+DEF_WAVL_START=380
+DEF_WAVL_END=1000
+DEF_WAVWL_STEP=5
+
+read -p "Start Wavelength (nm) [$DEF_WAVL_START]: " wavel_start
+read -p "End Wavelength (nm) [$DEF_WAVL_END]: " wavel_end
+read -p "Start Exposure time (us) Tinitial: " tinitial
+read -p "End Exposure time (us): Tfinal: " tfinal
+read -p "Number of images to take [$DEF_NPOINTS]: " npoints
+
+exposure_plan=${exposure_plan:-$DEF_EXPOSURE_PLAN}
+analog_gain=${analog_gain:-$DEF_GAIN}
+tag=${tag:-$DEF_TAG}
+wavl_step=${wavl_step:-$DEF_WAVWL_STEP}
+wavel_start=${wavel_start:-$DEF_WAVL_START}
+wavel_end=${wavel_end:-$DEF_WAVL_END}
+npoints=${npoints:-$DEF_NPOINTS}
+
+echo "gonet-exposure --log-file ${DEF_LOG_FILE} linear -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -n ${npoints}"
+exposure_times=$(gonet-exposure --log-file ${DEF_LOG_FILE} linear -ti ${tinitial}/1000000 -tf ${tfinal}/1000000 -n ${npoints})
+
+for (( wvl=wavel_start; wvl<=wavel_end; ))
+do
+	wv=$(printf '%04d' $wvl)
+	for i_t in ${exposure_times}
+	do
+		i=${i_t:0:3}
+		t=${i_t:4:7}
+		image=${tag}_${wv}nm_g${analog_gain}_${i}_${t}.jpg
+		echo "raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image}"
+		raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image} || exit 255
+	done 
+	wvl=$((wvl+wavl_step))
+done
