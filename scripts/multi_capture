@@ -23,7 +23,7 @@ read -p "Final Gain (1.0 .. 16.0) [$DEF_END_GAIN]: " g_final
 read -p "Gain step (1.0 .. 16.0) [$DEF_GAIN_STEP]: " g_step
 read -p "Exposure plan (linear|log|stops|combistops|combilog) [$DEF_EXPOSURE_PLAN]: " exposure_plan
 read -p "Start Exposure time (us) Tinitial: " tinitial
-read -p "End Exposure time (us): Tfinal: " tfinal
+read -p "End   Exposure time (us): Tfinal : " tfinal
 read -p "Sequence tag [$DEF_TAG]: " tag
 
 g_initial=${g_initial:-$DEF_START_GAIN}
