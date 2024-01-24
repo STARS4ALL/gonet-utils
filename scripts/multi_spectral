@@ -15,9 +15,9 @@ DEF_WAVL_END=1000
 DEF_WAVWL_STEP=5
 
 read -p "Start Wavelength (nm) [$DEF_WAVL_START]: " wavel_start
-read -p "End Wavelength (nm) [$DEF_WAVL_END]: " wavel_end
+read -p "End   Wavelength (nm) [$DEF_WAVL_END]  : " wavel_end
 read -p "Start Exposure time (us) Tinitial: " tinitial
-read -p "End Exposure time (us): Tfinal: " tfinal
+read -p "End   Exposure time (us): Tfinal : " tfinal
 read -p "Number of images to take [$DEF_NPOINTS]: " npoints
 
 exposure_plan=${exposure_plan:-$DEF_EXPOSURE_PLAN}

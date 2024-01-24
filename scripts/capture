@@ -17,7 +17,7 @@ DEF_EXPOSURE_PLAN="combistops"
 read -p "Exposure plan (linear|log|stops|combilog|combistops) [$DEF_EXPOSURE_PLAN]: " exposure_plan
 exposure_plan=${exposure_plan:-$DEF_EXPOSURE_PLAN}
 read -p "Start Exposure time (us) Tinitial: " tinitial
-read -p "End Exposure time (us): Tfinal: " tfinal
+read -p "End   Exposure time (us): Tfinal : " tfinal
 read -p "Analog Gain (1..16) [$DEF_GAIN]: " analog_gain
 analog_gain=${analog_gain:-$DEF_GAIN}
 read -p "Sequence tag [$DEF_TAG]: " tag

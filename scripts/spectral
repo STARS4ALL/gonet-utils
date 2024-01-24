@@ -13,7 +13,7 @@ DEF_WAVWL_STEP=5
 DEF_EXPTIME=800000
 
 read -p "Start Wavelength (nm) [$DEF_WAVL_START]: " wavel_start
-read -p "End Wavelength (nm) [$DEF_WAVL_END]: " wavel_end
+read -p "End   Wavelength (nm) [$DEF_WAVL_END]: " wavel_end
 read -p "Exposure time (us) [$DEF_EXPTIME]: " t
 
 
