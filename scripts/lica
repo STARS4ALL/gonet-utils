@@ -1,0 +1,68 @@
+#!/bin/bash
+
+# ------------------------------------------------------------------------
+# Capture N images at a given wavelength, sweeping from 350 nm to 1050 nm
+# in steps of 5 nm
+# ------------------------------------------------------------------------
+
+
+analog_gain=1
+wavel_start=350
+wavel_end=1050
+wavl_step=5
+tag=spec
+start_time_ms=3000
+end_time_ms=5000
+npoints=3
+log_file=lica.log
+
+echo "gonet-exposure --log-file ${log_file} linear -ti ${start_time_ms}/1000 -tf ${end_time_ms}/1000 -n ${npoints}"
+exposure_times=$(gonet-exposure --log-file ${log_file} linear -ti ${start_time_ms}/1000 -tf ${end_time_ms}/1000 -n ${npoints})
+
+
+# BG39 From 350 nm to 569 nm
+# OG570 from 570 nm to 829 nm
+# RG830 from 830 nm to 1050 nm
+XOVER1=570
+XOVER2=830
+XOVER3=1050
+
+function select_filter () {
+	local wave=$1
+	if [[ $wave -lt $XOVER1 ]]
+	then
+		echo -n "BG39"
+	elif [[ $wave -lt $XOVER2 ]]
+	then
+		echo -n "OG570"
+	elif [[ $wave -le $XOVER3 ]]
+	then
+		echo -n "RG830"
+	else
+		echo -n "STOP!"
+	fi
+} 
+
+filt=BG39
+read -p "Ready for the first wavelength ($wavel_start nm)? [$filt] [y]: " answer
+
+for (( wvl=wavel_start; wvl<=wavel_end; ))
+do
+	wv=$(printf '%04d' $wvl)
+	for i_t in ${exposure_times}
+	do
+		i=${i_t:0:3}
+		t=${i_t:4:7}
+		g=$(printf "%02d" $analog_gain)
+		image=${tag}_${wv}nm_g${g}_${i}_${t}_${filt}.jpg
+		echo "raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image}"
+		raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image} || exit 255
+	done 
+	wvl=$((wvl+wavl_step))
+	filt=$(select_filter $wvl)
+	read -p "Ready for the next wavelength ($wvl nm)? [$filt] [y]: " answer
+	if [[ "$answer" != "" ]]
+	then
+		break
+	fi
+done
