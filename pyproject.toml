@@ -53,7 +53,8 @@ script-files = [
     "scripts/capture",
     "scripts/spectral",
     "scripts/multi_capture",
-    "scripts/multi_spectral"
+    "scripts/multi_spectral",
+    "scripts/lica"
 ]
 
 # pyproject.toml
