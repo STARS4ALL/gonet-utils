@@ -22,7 +22,7 @@ tag=${tag:-$DEF_TAG}
 wavl_step=${wavl_step:-$DEF_WAVWL_STEP}
 wavel_start=${wavel_start:-$DEF_WAVL_START}
 wavel_end=${wavel_end:-$DEF_WAVL_END}
-tag=${t:-$DEF_EXPTIME}
+t=${t:-$DEF_EXPTIME}
 i=001
 
 for (( wvl=wavel_start; wvl<=wavel_end; ))
