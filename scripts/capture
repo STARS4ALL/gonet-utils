@@ -12,6 +12,7 @@ DEF_MAX_DN=4095 # For the "stops" exposure plan
 DEF_TAG="flat"
 DEF_GAIN=1
 DEF_EXPOSURE_PLAN="combistops"
+DEF_PAIRS=y
 
 
 read -p "Exposure plan (linear|log|stops|combilog|combistops) [$DEF_EXPOSURE_PLAN]: " exposure_plan
@@ -22,6 +23,9 @@ read -p "Analog Gain (1..16) [$DEF_GAIN]: " analog_gain
 analog_gain=${analog_gain:-$DEF_GAIN}
 read -p "Sequence tag [$DEF_TAG]: " tag
 tag=${tag:-$DEF_TAG}
+read -p "Image in pairs [Y/n]?: " pairs
+pairs=${tag:-$DEF_PAIRS}
+
 
 if [[ "$exposure_plan" = "linear" ]]
 then
@@ -76,7 +80,10 @@ do
 	echo "raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image}"
 	raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image} || exit 255
 
-	image=${tag}_g${g}_${i}_${t}_b.jpg
-	echo "raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image}"
-	raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image} || exit 255
+	if [[ "$pairs" = "y" ]]
+	then
+		image=${tag}_g${g}_${i}_${t}_b.jpg
+		echo "raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image}"
+		raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image} || exit 255
+	fi
 done  

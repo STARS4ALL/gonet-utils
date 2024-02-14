@@ -20,7 +20,7 @@ echo "gonet-exposure --log-file ${log_file} linear -ti ${start_time_ms}/1000 -tf
 exposure_times=$(gonet-exposure --log-file ${log_file} linear -ti ${start_time_ms}/1000 -tf ${end_time_ms}/1000 -n ${npoints})
 
 
-# BG39 From 350 nm to 569 nm
+# BG38 From 350 nm to 569 nm
 # OG570 from 570 nm to 829 nm
 # RG830 from 830 nm to 1050 nm
 XOVER1=570
@@ -31,7 +31,7 @@ function select_filter () {
 	local wave=$1
 	if [[ $wave -lt $XOVER1 ]]
 	then
-		echo -n "BG39"
+		echo -n "BG38"
 	elif [[ $wave -lt $XOVER2 ]]
 	then
 		echo -n "OG570"
@@ -43,7 +43,7 @@ function select_filter () {
 	fi
 } 
 
-filt=BG39
+filt=BG38
 read -p "Ready for the first wavelength ($wavel_start nm)? [$filt] [y]: " answer
 
 for (( wvl=wavel_start; wvl<=wavel_end; ))
