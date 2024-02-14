@@ -24,7 +24,7 @@ analog_gain=${analog_gain:-$DEF_GAIN}
 read -p "Sequence tag [$DEF_TAG]: " tag
 tag=${tag:-$DEF_TAG}
 read -p "Image in pairs [Y/n]?: " pairs
-pairs=${tag:-$DEF_PAIRS}
+pairs=${pairs:-$DEF_PAIRS}
 
 
 if [[ "$exposure_plan" = "linear" ]]
@@ -79,7 +79,6 @@ do
 	image=${tag}_g${g}_${i}_${t}_a.jpg
 	echo "raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image}"
 	raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image} || exit 255
-
 	if [[ "$pairs" = "y" ]]
 	then
 		image=${tag}_g${g}_${i}_${t}_b.jpg
