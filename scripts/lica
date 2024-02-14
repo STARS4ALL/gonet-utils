@@ -1,23 +1,42 @@
 #!/bin/bash
 
 # ------------------------------------------------------------------------
-# Capture N images at a given wavelength, sweeping from 350 nm to 1050 nm
-# in steps of 5 nm
+# Capture 4 images per wavelength (2 to 5 secs), 
+# sweeping from 350 nm to 1050 nm in steps of 5 nm by default
 # ------------------------------------------------------------------------
 
+DATE=$(date +%Y%m%d)
+DEF_WAVL_START=350
+DEF_WAVL_END=1050
+DEF_WAVWL_STEP=5
+DEF_T0=2000000
+DEF_T1=5000000
+DEF_NPOINTS=4
+DEF_GAIN=1
+DEF_TAG="spec"
+DEF_LOG_FILE="lica_${DATE}.log"
 
-analog_gain=1
-wavel_start=350
-wavel_end=1050
-wavl_step=5
-tag=spec
-start_time_ms=3000
-end_time_ms=5000
-npoints=3
-log_file=lica.log
+read -p "Images prefix [$DEF_TAG]: " tag
+read -p "Start Wavelength (nm) [$DEF_WAVL_START]: " wavel_start
+read -p "End   Wavelength (nm) [$DEF_WAVL_END]: " wavel_end
+read -p "Start Exposure time per wavelength - Tinitial (us) [$DEF_T0]: " tinitial
+read -p "End   Exposure time per wavelength - Tfinal   (us) [$DEF_T1]: " tfinal
+read -p "Number of images to take per wavelength [$DEF_NPOINTS]: " npoints
+read -p "Analog Gain (1..16) [$DEF_GAIN]: " analog_gain
+read -p "Log file [$DEF_LOG_FILE]: " log_file
 
-echo "gonet-exposure --log-file ${log_file} linear -ti ${start_time_ms}/1000 -tf ${end_time_ms}/1000 -n ${npoints}"
-exposure_times=$(gonet-exposure --log-file ${log_file} linear -ti ${start_time_ms}/1000 -tf ${end_time_ms}/1000 -n ${npoints})
+analog_gain=${analog_gain:-$DEF_GAIN}
+tag=${tag:-$DEF_TAG}
+log_file=${log_file:-$DEF_LOG_FILE}
+wavel_start=${wavel_start:-$DEF_WAVL_START}
+wavel_end=${wavel_end:-$DEF_WAVL_END}
+wavl_step=${wavl_step:-$DEF_WAVWL_STEP}
+start_time_ms=${tinitial:-$DEF_T0}
+end_time_ms=${tfinal:-$DEF_T1}
+npoints=${npoints:-$DEF_NPOINTS}
+
+echo "gonet-exposure --log-file ${log_file} linear -ti ${start_time_ms}/1000000 -tf ${end_time_ms}/1000000 -n ${npoints}"
+exposure_times=$(gonet-exposure --log-file ${log_file} linear -ti ${start_time_ms}/1000000 -tf ${end_time_ms}/1000000 -n ${npoints})
 
 
 # BG38 From 350 nm to 569 nm
@@ -45,6 +64,10 @@ function select_filter () {
 
 filt=BG38
 read -p "Ready for the first wavelength ($wavel_start nm)? [$filt] [y]: " answer
+if [[ ! "$answer" == "y" && ! "$answer" == "" ]]
+then
+	exit 0
+fi
 
 for (( wvl=wavel_start; wvl<=wavel_end; ))
 do
@@ -55,13 +78,13 @@ do
 		t=${i_t:4:7}
 		g=$(printf "%02d" $analog_gain)
 		image=${tag}_${wv}nm_g${g}_${i}_${t}_${filt}.jpg
-		echo "raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image}"
-		raspistill --raw --shutter ${t} --timeout 100 -drc off --nopreview -ex off -awb off --analoggain ${analog_gain} --digitalgain 1 --output ${image} || exit 255
+		echo "raspistill --raw --shutter ${t} --analoggain ${analog_gain} --digitalgain 1 --output ${image} --timeout 100 -drc off --nopreview -ex off -awb off" | tee -a ${log_file}
+		raspistill --raw --shutter ${t} --analoggain ${analog_gain} --digitalgain 1 --output ${image} --timeout 100 -drc off --nopreview -ex off -awb off || exit 255
 	done 
 	wvl=$((wvl+wavl_step))
 	filt=$(select_filter $wvl)
 	read -p "Ready for the next wavelength ($wvl nm)? [$filt] [y]: " answer
-	if [[ "$answer" != "" ]]
+	if [[ ! "$answer" == "y" && ! "$answer" == "" ]]
 	then
 		break
 	fi
