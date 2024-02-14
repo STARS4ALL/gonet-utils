@@ -40,10 +40,10 @@ exposure_times=$(gonet-exposure --log-file ${log_file} linear -ti ${start_time_m
 
 
 # BG38 From 350 nm to 569 nm
-# OG570 from 570 nm to 829 nm
+# OG570 from 570 nm to 859 nm
 # RG830 from 830 nm to 1050 nm
 XOVER1=570
-XOVER2=830
+XOVER2=860
 XOVER3=1050
 
 function select_filter () {
